@@ -158,6 +158,15 @@ namespace System.IO.Compression
         }
 
         /// <summary>
+        /// Flushes the contents of the archive.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">If this object has been disposed</exception>
+        public void Flush()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Creates an empty entry in the Zip archive with the specified entry name.
         /// There are no restrictions on the names of entries.
         /// The last write time of the entry is set to the current time.

@@ -66,9 +66,14 @@ namespace System.IO.Compression.Tests
             using (var s = new MemoryStream())
             {
                 var testStream = new WrappedStream(s, false, true, true, null);
-                await CreateFromDir(zfolder(folder), testStream, ZipArchiveMode.Create, useSpansForWriting, writeInChunks);
 
-                IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
+                using (ZipArchive archive = new ZipArchive(testStream, ZipArchiveMode.Create, true))
+                {
+                    await CreateFromDir(zfolder(folder), archive, useSpansForWriting, writeInChunks);
+                    archive.Flush();
+
+                    IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
+                }
             }
         }
 
@@ -83,9 +88,12 @@ namespace System.IO.Compression.Tests
             using (var s = new MemoryStream())
             {
                 var testStream = new WrappedStream(s, false, true, false, null);
-                await CreateFromDir(zfolder(folder), testStream, ZipArchiveMode.Create);
+                using (ZipArchive archive = new ZipArchive(testStream, ZipArchiveMode.Create, true))
+                {
+                    await CreateFromDir(zfolder(folder), archive);
 
-                IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
+                    IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
+                }
             }
         }
 

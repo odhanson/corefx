@@ -77,6 +77,7 @@ namespace System.IO.Compression
         public ZipArchive(System.IO.Stream stream, System.IO.Compression.ZipArchiveMode mode, bool leaveOpen, System.Text.Encoding entryNameEncoding) { }
         public System.Collections.ObjectModel.ReadOnlyCollection<System.IO.Compression.ZipArchiveEntry> Entries { get { throw null; } }
         public System.IO.Compression.ZipArchiveMode Mode { get { throw null; } }
+        public void Flush() { }
         public System.IO.Compression.ZipArchiveEntry CreateEntry(string entryName) { throw null; }
         public System.IO.Compression.ZipArchiveEntry CreateEntry(string entryName, System.IO.Compression.CompressionLevel compressionLevel) { throw null; }
         public void Dispose() { }
