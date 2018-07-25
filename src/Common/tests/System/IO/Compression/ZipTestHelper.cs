@@ -145,13 +145,21 @@ namespace System.IO.Compression.Tests
             return Text.Encoding.Default.GetBytes(rep);
         }
 
-        public static void IsZipSameAsDir(Stream archiveFile, string directory, ZipArchiveMode mode, bool requireExplicit, bool checkTimes)
+        public static void IsZipSameAsDir(Stream archiveFile, string directory, ZipArchiveMode mode, bool requireExplicit, bool checkTimes, bool leaveOpen = false)
+        {
+            IsZipSameAsDir(archiveFile, new [] { directory }, mode, requireExplicit, checkTimes, leaveOpen);
+        }
+
+        public static void IsZipSameAsDir(Stream archiveFile, string[] directories, ZipArchiveMode mode, bool requireExplicit, bool checkTimes, bool leaveOpen=false)
         {
             int count = 0;
 
-            using (ZipArchive archive = new ZipArchive(archiveFile, mode))
+            using (ZipArchive archive = new ZipArchive(archiveFile, mode, leaveOpen))
             {
-                List<FileData> files = FileData.InPath(directory);
+                List<FileData> files = directories
+                    .SelectMany(directory => FileData.InPath(directory))
+                    .ToList();
+
                 Assert.All<FileData>(files, (file) => {
                     count++;
                     string entryName = file.FullName;

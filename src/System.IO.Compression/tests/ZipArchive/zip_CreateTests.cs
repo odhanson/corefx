@@ -70,10 +70,36 @@ namespace System.IO.Compression.Tests
                 using (ZipArchive archive = new ZipArchive(testStream, ZipArchiveMode.Create, true))
                 {
                     await CreateFromDir(zfolder(folder), archive, useSpansForWriting, writeInChunks);
-                    archive.Flush();
 
-                    IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
+                    long currentStreamLength = s.Length; 
+                    archive.Flush();
+                    Assert.True(s.Length > currentStreamLength, "After flush stream length should increase");
+
+                    IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true, leaveOpen: true);
                 }
+
+                IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
+            }
+        }
+
+        [Theory]
+        [InlineData("small", false, false)]
+        [InlineData("normal", false, false)]
+        [InlineData("empty", false, false)]
+        [InlineData("emptydir", false, false)]
+        [InlineData("small", true, false)]
+        [InlineData("normal", true, false)]
+        [InlineData("small", false, true)]
+        [InlineData("normal", false, true)]
+        public static async Task CreateNormal_NoFlush(string folder, bool useSpansForWriting, bool writeInChunks)
+        {
+            using (var s = new MemoryStream())
+            {
+                var testStream = new WrappedStream(s, false, true, true, null);
+
+                await CreateFromDir(zfolder(folder), testStream, ZipArchiveMode.Create, useSpansForWriting, writeInChunks);
+
+                IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
             }
         }
 
@@ -92,8 +118,13 @@ namespace System.IO.Compression.Tests
                 {
                     await CreateFromDir(zfolder(folder), archive);
 
-                    IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
+                    long currentStreamLength = s.Length;
+                    archive.Flush();
+                    Assert.True(s.Length > currentStreamLength, "After flush stream length should increase");
+
+                    IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true, leaveOpen: true);
                 }
+                IsZipSameAsDir(s, zfolder(folder), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
             }
         }
 
@@ -121,6 +152,44 @@ namespace System.IO.Compression.Tests
                 await CreateFromDir(zfolder("unicode"), testStream, ZipArchiveMode.Create);
 
                 IsZipSameAsDir(s, zfolder("unicode"), ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
+            }
+        }
+
+        [Fact]
+        public static async Task CreateNormal_MultipleWritesNoFlush()
+        {
+            using (var s = new MemoryStream())
+            {
+                var testStream = new WrappedStream(s, false, true, true, null);
+
+                using (ZipArchive archive = new ZipArchive(testStream, ZipArchiveMode.Create, true))
+                {
+                    await CreateFromDir(zfolder("small"), archive);
+                    await CreateFromDir(zfolder("normal"), archive);
+                }
+
+                IsZipSameAsDir(s, new[] { zfolder("small"), zfolder("normal") }, ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
+            }
+        }
+
+        [Fact]
+        public static async Task CreateNormal_MultipleFlush()
+        {
+            using (var s = new MemoryStream())
+            {
+                var testStream = new WrappedStream(s, false, true, true, null);
+
+                using (ZipArchive archive = new ZipArchive(testStream, ZipArchiveMode.Create, true))
+                {
+                    await CreateFromDir(zfolder("small"), archive);
+                    archive.Flush();
+                    await CreateFromDir(zfolder("normal"), archive);
+                    archive.Flush();
+
+                    IsZipSameAsDir(s, new[] { zfolder("small"), zfolder("normal") }, ZipArchiveMode.Read, requireExplicit: true, checkTimes: true, leaveOpen: true);
+                }
+
+                IsZipSameAsDir(s, new[] { zfolder("small"), zfolder("normal") }, ZipArchiveMode.Read, requireExplicit: true, checkTimes: true);
             }
         }
     }

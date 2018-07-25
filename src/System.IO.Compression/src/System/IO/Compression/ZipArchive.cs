@@ -163,7 +163,17 @@ namespace System.IO.Compression
         /// <exception cref="ObjectDisposedException">If this object has been disposed</exception>
         public void Flush()
         {
-            throw new NotImplementedException();
+            switch (_mode)
+            {
+                case ZipArchiveMode.Read:
+                    break;
+                case ZipArchiveMode.Create:
+                case ZipArchiveMode.Update:
+                default:
+                    Debug.Assert(_mode == ZipArchiveMode.Update || _mode == ZipArchiveMode.Create);
+                    WriteFile();
+                    break;
+            }
         }
 
         /// <summary>
@@ -658,6 +668,8 @@ namespace System.IO.Compression
             long sizeOfCentralDirectory = _archiveStream.Position - startOfCentralDirectory;
 
             WriteArchiveEpilogue(startOfCentralDirectory, sizeOfCentralDirectory);
+
+            _entries.Clear();
         }
 
         // writes eocd, and if needed, zip 64 eocd, zip64 eocd locator
